@@ -58,7 +58,8 @@ public:
     ON_CALL(cert_validation_ctx_config_, certificateRevocationListPath())
         .WillByDefault(ReturnRef(path_string));
     const std::vector<std::string> empty_string_list;
-    const std::vector<envoy::type::matcher::v3::StringMatcher> san_matchers;
+    const std::vector<envoy::extensions::transport_sockets::tls::v3::SubjectAltNameMatcher>
+        san_matchers;
     ON_CALL(cert_validation_ctx_config_, subjectAltNameMatchers())
         .WillByDefault(ReturnRef(san_matchers));
     ON_CALL(cert_validation_ctx_config_, verifyCertificateHashList())
@@ -85,11 +86,12 @@ public:
     EXPECT_TRUE(cert_view->VerifySignature(payload, signature, sign_alg));
 
     std::string error;
+    std::unique_ptr<quic::ProofVerifyDetails> verify_details;
     EXPECT_EQ(quic::QUIC_SUCCESS,
               verifier_->VerifyCertChain("www.example.org", 54321, chain->certs,
                                          /*ocsp_response=*/"", /*cert_sct=*/"Fake SCT",
-                                         /*context=*/nullptr, &error,
-                                         /*details=*/nullptr, /*out_alert=*/nullptr,
+                                         /*context=*/nullptr, &error, &verify_details,
+                                         /*out_alert=*/nullptr,
                                          /*callback=*/nullptr))
         << error;
   }
@@ -144,6 +146,7 @@ public:
         listener_config_.listenerScope(),
         std::unique_ptr<Ssl::MockServerContextConfig>(mock_context_config_));
     transport_socket_factory_->initialize();
+    EXPECT_CALL(filter_chain_, name()).WillRepeatedly(Return(""));
   }
 
   void expectCertChainAndPrivateKey(const std::string& cert, bool expect_private_key) {

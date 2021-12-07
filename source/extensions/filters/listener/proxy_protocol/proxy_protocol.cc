@@ -64,7 +64,7 @@ const KeyValuePair* Config::isTlvTypeNeeded(uint8_t type) const {
 size_t Config::numberOfNeededTlvTypes() const { return tlv_types_.size(); }
 
 Network::FilterStatus Filter::onAccept(Network::ListenerFilterCallbacks& cb) {
-  ENVOY_LOG(debug, "proxy_protocol: New connection accepted");
+  ENVOY_LOG(debug, "proxy_protocol: new connection accepted");
   Network::ConnectionSocket& socket = cb.socket();
   socket.ioHandle().initializeFileEvent(
       cb.dispatcher(),
@@ -490,7 +490,7 @@ ReadOrParseState Filter::readProxyHeader(Network::IoHandle& io_handle) {
         } else {
           return ReadOrParseState::Error;
         }
-      } else {
+      } else if (nread != 0) {
         const auto result = io_handle.recv(buf_ + buf_off_, nread, 0);
         nread = result.return_value_;
         if (!result.ok()) {

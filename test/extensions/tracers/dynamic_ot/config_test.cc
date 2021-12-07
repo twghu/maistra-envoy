@@ -61,7 +61,7 @@ TEST(DynamicOtTracerConfigTest, DISABLED_DynamicOpentracingHttpTracer) {
 TEST(DISABLED_DynamicOtTracerConfigTest, DEPRECATED_FEATURE_TEST(DeprecatedExtensionFilterName)) {
   const std::string deprecated_name = "envoy.dynamic.ot";
 
-  ASSERT_NE(nullptr, Registry::FactoryRegistry<Server::Configuration::TracerFactory>::getFactory(
+  ASSERT_EQ(nullptr, Registry::FactoryRegistry<Server::Configuration::TracerFactory>::getFactory(
                          deprecated_name));
 }
 

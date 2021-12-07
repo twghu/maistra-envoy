@@ -63,6 +63,7 @@ public:
   MOCK_METHOD(std::string, ciphersuiteString, (), (const));
   MOCK_METHOD(const std::string&, tlsVersion, (), (const));
   MOCK_METHOD(absl::optional<std::string>, x509Extension, (absl::string_view), (const));
+  MOCK_METHOD(const std::string&, alpn, (), (const));
 };
 
 class MockClientContext : public ClientContext {
@@ -142,6 +143,8 @@ public:
 
   MOCK_METHOD(const std::string&, certificateChain, (), (const));
   MOCK_METHOD(const std::string&, certificateChainPath, (), (const));
+  MOCK_METHOD(const std::string&, pkcs12, (), (const));
+  MOCK_METHOD(const std::string&, pkcs12Path, (), (const));
   MOCK_METHOD(const std::string&, privateKey, (), (const));
   MOCK_METHOD(const std::string&, privateKeyPath, (), (const));
   MOCK_METHOD(const std::vector<uint8_t>&, ocspStaple, (), (const));
@@ -157,8 +160,9 @@ public:
   MOCK_METHOD(const std::string&, caCertPath, (), (const));
   MOCK_METHOD(const std::string&, certificateRevocationList, (), (const));
   MOCK_METHOD(const std::string&, certificateRevocationListPath, (), (const));
-  MOCK_METHOD(const std::vector<envoy::type::matcher::v3::StringMatcher>&, subjectAltNameMatchers,
-              (), (const));
+  MOCK_METHOD(
+      const std::vector<envoy::extensions::transport_sockets::tls::v3::SubjectAltNameMatcher>&,
+      subjectAltNameMatchers, (), (const));
   MOCK_METHOD(const std::vector<std::string>&, verifyCertificateHashList, (), (const));
   MOCK_METHOD(const std::vector<std::string>&, verifyCertificateSpkiList, (), (const));
   MOCK_METHOD(bool, allowExpiredCertificate, (), (const));
@@ -168,6 +172,7 @@ public:
   MOCK_METHOD(envoy::extensions::transport_sockets::tls::v3::CertificateValidationContext::
                   TrustChainVerification,
               trustChainVerification, (), (const));
+  MOCK_METHOD(bool, onlyVerifyLeafCertificateCrl, (), (const));
 };
 
 class MockPrivateKeyMethodManager : public PrivateKeyMethodManager {

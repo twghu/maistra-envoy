@@ -45,6 +45,12 @@ struct CertContext {
   Envoy::Ssl::PrivateKeyMethodProviderSharedPtr getPrivateKeyMethodProvider() {
     return private_key_method_provider_;
   }
+  void loadCertificateChain(const std::string& data, const std::string& data_path);
+  void loadPrivateKey(const std::string& data, const std::string& data_path,
+                      const std::string& password);
+  void loadPkcs12(const std::string& data, const std::string& data_path,
+                  const std::string& password);
+  void checkPrivateKey(const bssl::UniquePtr<EVP_PKEY>& pkey, const std::string& key_path);
 };
 
 // Use a single context for certificates instead of one context per certificate as in the BoringSSL

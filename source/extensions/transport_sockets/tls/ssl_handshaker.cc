@@ -4,13 +4,8 @@
 
 #include "source/common/common/assert.h"
 #include "source/common/common/empty_string.h"
-#include "source/common/common/hex.h"
 #include "source/common/http/headers.h"
 #include "source/extensions/transport_sockets/tls/utility.h"
-
-#include "absl/strings/str_replace.h"
-#include "openssl/err.h"
-#include "openssl/x509v3.h"
 
 using Envoy::Network::PostIoAction;
 
@@ -33,11 +28,6 @@ SslHandshakerImpl::SslHandshakerImpl(bssl::UniquePtr<SSL> ssl, int ssl_extended_
     : ssl_(std::move(ssl)), handshake_callbacks_(handshake_callbacks),
       state_(Ssl::SocketState::PreHandshake) {
   SSL_set_ex_data(ssl_.get(), ssl_extended_socket_info_index, &(this->extended_socket_info_));
-}
-
-bool SslHandshakerImpl::peerCertificatePresented() const {
-  bssl::UniquePtr<X509> cert(SSL_get_peer_certificate(ssl()));
-  return cert != nullptr;
 }
 
 bool SslHandshakerImpl::peerCertificateValidated() const {
@@ -247,90 +237,6 @@ Network::PostIoAction SslHandshakerImpl::doHandshake() {
       return PostIoAction::Close;
     }
   }
-}
-
-const std::string& SslHandshakerImpl::serialNumberPeerCertificate() const {
-  if (!cached_serial_number_peer_certificate_.empty()) {
-    return cached_serial_number_peer_certificate_;
-  }
-  bssl::UniquePtr<X509> cert(SSL_get_peer_certificate(ssl()));
-  if (!cert) {
-    ASSERT(cached_serial_number_peer_certificate_.empty());
-    return cached_serial_number_peer_certificate_;
-  }
-  cached_serial_number_peer_certificate_ = Utility::getSerialNumberFromCertificate(*cert.get());
-  return cached_serial_number_peer_certificate_;
-}
-
-const std::string& SslHandshakerImpl::issuerPeerCertificate() const {
-  if (!cached_issuer_peer_certificate_.empty()) {
-    return cached_issuer_peer_certificate_;
-  }
-  bssl::UniquePtr<X509> cert(SSL_get_peer_certificate(ssl()));
-  if (!cert) {
-    ASSERT(cached_issuer_peer_certificate_.empty());
-    return cached_issuer_peer_certificate_;
-  }
-  cached_issuer_peer_certificate_ = Utility::getIssuerFromCertificate(*cert);
-  return cached_issuer_peer_certificate_;
-}
-
-const std::string& SslHandshakerImpl::subjectPeerCertificate() const {
-  if (!cached_subject_peer_certificate_.empty()) {
-    return cached_subject_peer_certificate_;
-  }
-  bssl::UniquePtr<X509> cert(SSL_get_peer_certificate(ssl()));
-  if (!cert) {
-    ASSERT(cached_subject_peer_certificate_.empty());
-    return cached_subject_peer_certificate_;
-  }
-  cached_subject_peer_certificate_ = Utility::getSubjectFromCertificate(*cert);
-  return cached_subject_peer_certificate_;
-}
-
-const std::string& SslHandshakerImpl::subjectLocalCertificate() const {
-  if (!cached_subject_local_certificate_.empty()) {
-    return cached_subject_local_certificate_;
-  }
-  X509* cert = SSL_get_certificate(ssl());
-  if (!cert) {
-    ASSERT(cached_subject_local_certificate_.empty());
-    return cached_subject_local_certificate_;
-  }
-  cached_subject_local_certificate_ = Utility::getSubjectFromCertificate(*cert);
-  return cached_subject_local_certificate_;
-}
-
-absl::optional<SystemTime> SslHandshakerImpl::validFromPeerCertificate() const {
-  bssl::UniquePtr<X509> cert(SSL_get_peer_certificate(ssl()));
-  if (!cert) {
-    return absl::nullopt;
-  }
-  return Utility::getValidFrom(*cert);
-}
-
-absl::optional<SystemTime> SslHandshakerImpl::expirationPeerCertificate() const {
-  bssl::UniquePtr<X509> cert(SSL_get_peer_certificate(ssl()));
-  if (!cert) {
-    return absl::nullopt;
-  }
-  return Utility::getExpirationTime(*cert);
-}
-
-const std::string& SslHandshakerImpl::sessionId() const {
-  if (!cached_session_id_.empty()) {
-    return cached_session_id_;
-  }
-  SSL_SESSION* session = SSL_get_session(ssl());
-  if (session == nullptr) {
-    ASSERT(cached_session_id_.empty());
-    return cached_session_id_;
-  }
-
-  unsigned int session_id_length = 0;
-  const uint8_t* session_id = SSL_SESSION_get_id(session, &session_id_length);
-  cached_session_id_ = Hex::encode(session_id, session_id_length);
-  return cached_session_id_;
 }
 
 } // namespace Tls
